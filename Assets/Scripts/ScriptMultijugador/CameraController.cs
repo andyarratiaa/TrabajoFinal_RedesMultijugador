@@ -1,16 +1,8 @@
-﻿
+﻿using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 
-/*
-    This file has a commented version with details about how each line works. 
-    The commented version contains code that is easier and simpler to read. This file is minified.
-*/
 
-/// <summary>
-/// Camera movement script for third person games.
-/// This Script should not be applied to the camera! It is attached to an empty object and inside
-/// it (as a child object) should be your game's MainCamera.
-/// </summary>
 public class CameraController : MonoBehaviour
 {
 
@@ -28,30 +20,44 @@ public class CameraController : MonoBehaviour
     float mouseX;
     float mouseY;
     float offsetDistanceY;
-
+    [SerializeField] float aditionalOffsetY = 0f;
+    
+    
     Transform player;
 
     void Start()
     {
+        if(NetworkManager.Singleton == null)
+        {
+            player = GameObject.FindWithTag("Player").transform;
+            offsetDistanceY = transform.position.y;
 
-        player = GameObject.FindWithTag("Player").transform;
-        offsetDistanceY = transform.position.y;
+            // Lock and hide cursor with option isn't checked
+            if (!clickToMoveCamera)
+            {
+                UnityEngine.Cursor.lockState = CursorLockMode.Locked;
+                UnityEngine.Cursor.visible = false;
+            }
+        }
+    }
 
-        // Lock and hide cursor with option isn't checked
-        if ( ! clickToMoveCamera )
+    public void InitCameraSystem(Transform playerObject)
+    {
+        player = playerObject;
+        offsetDistanceY += transform.position.y;
+
+        if(!clickToMoveCamera)
         {
             UnityEngine.Cursor.lockState = CursorLockMode.Locked;
             UnityEngine.Cursor.visible = false;
         }
-
     }
-
 
     void Update()
     {
 
         // Follow player - camera offset
-        transform.position = player.position + new Vector3(0, offsetDistanceY, 0);
+        transform.position = player.position + new Vector3(0, offsetDistanceY + aditionalOffsetY, 0);
 
         // Set camera zoom when mouse wheel is scrolled
         if( canZoom && Input.GetAxis("Mouse ScrollWheel") != 0 )

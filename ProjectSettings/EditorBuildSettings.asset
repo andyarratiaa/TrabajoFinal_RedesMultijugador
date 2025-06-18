@@ -5,7 +5,19 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: "Assets/Scenes/MEN\xDA INICIO.unity"
+    guid: f488eb592c69a2948bab534cad856a15
+  - enabled: 1
+    path: Assets/Scenes/LOBBY.unity
+    guid: 5d0fbb9fd47842f418f96b2b82bf9870
+  - enabled: 1
+    path: Assets/Scenes/Level1.unity
+    guid: 2a39352120f1d64458823da1d031f98d
+  - enabled: 1
+    path: Assets/Scenes/WIN SCENE.unity
+    guid: 2dbc84a405b5f694ebfc85da8195f639
   m_configObjects: {}

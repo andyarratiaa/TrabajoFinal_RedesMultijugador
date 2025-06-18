@@ -1,6 +1,4 @@
-﻿
-using UnityEditor.VersionControl;
-using UnityEngine;
+﻿using UnityEngine;
 
 /*
     This file has a commented version with details about how each line works. 
@@ -60,44 +58,54 @@ public class ThirdPersonController : MonoBehaviour
     // Update is only being used here to identify keys and trigger animations
     void Update()
     {
-
-        // Input checkers
-        inputHorizontal = Input.GetAxis("Horizontal");
-        inputVertical = Input.GetAxis("Vertical");
-        inputJump = Input.GetAxis("Jump") == 1f;
-        inputSprint = Input.GetAxis("Fire3") == 1f;
-        // Unfortunately GetAxis does not work with GetKeyDown, so inputs must be taken individually
-        inputCrouch = Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.JoystickButton1);
+        if (PauseMenuManager.IsPaused)
+        {
+            inputHorizontal = 0f;
+            inputVertical = 0f;
+            inputJump = false;
+            inputCrouch = false;
+            isSprinting = false;
+        }
+        else
+        {
+            // Input checkers
+            inputHorizontal = Input.GetAxis("Horizontal");
+            inputVertical = Input.GetAxis("Vertical");
+            inputJump = Input.GetAxis("Jump") == 1f;
+            inputSprint = Input.GetAxis("Fire3") == 1f;
+            // Unfortunately GetAxis does not work with GetKeyDown, so inputs must be taken individually
+            inputCrouch = Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.JoystickButton1);
+        }
 
         // Check if you pressed the crouch input key and change the player's state
-        if ( inputCrouch )
+        if (inputCrouch)
             isCrouching = !isCrouching;
 
         // Run and Crouch animation
         // If dont have animator component, this block wont run
-        if ( cc.isGrounded && animator != null )
+        if (cc.isGrounded && animator != null)
         {
 
             // Crouch
             // Note: The crouch animation does not shrink the character's collider
             animator.SetBool("crouch", isCrouching);
-            
+
             // Run
             float minimumSpeed = 0.9f;
-            animator.SetBool("run", cc.velocity.magnitude > minimumSpeed );
+            animator.SetBool("run", cc.velocity.magnitude > minimumSpeed);
 
             // Sprint
             isSprinting = cc.velocity.magnitude > minimumSpeed && inputSprint;
-            animator.SetBool("sprint", isSprinting );
+            animator.SetBool("sprint", isSprinting);
 
         }
 
         // Jump animation
-        if( animator != null )
-            animator.SetBool("air", cc.isGrounded == false );
+        if (animator != null)
+            animator.SetBool("air", cc.isGrounded == false);
 
         // Handle can jump or not
-        if ( inputJump && cc.isGrounded )
+        if (inputJump && cc.isGrounded)
         {
             isJumping = true;
             // Disable crounching when jumping
