@@ -1,15 +1,20 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
+using TMPro;
 
 public class MainMenuManager : MonoBehaviour
 {
+    [SerializeField] private TMP_InputField playerNameInput;
 
     private void Start()
     {
-        UnityEngine.Cursor.lockState = CursorLockMode.None;
-        UnityEngine.Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    public void OnNameEntered()
+    {
+        string name = playerNameInput.text;
+        PlayerDataHandler.Instance.SetPlayerName(name);
     }
 
     public void Exit()
