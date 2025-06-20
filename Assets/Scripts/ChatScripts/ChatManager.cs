@@ -4,6 +4,8 @@ using TMPro;
 
 public class ChatManager : NetworkBehaviour
 {
+    public static bool IsChatOpen { get; private set; } = false;
+
     [Header("UI References")]
     [SerializeField] private GameObject chatMessagePrefab;   // Prefab del mensaje de chat (debe tener TMP_Text)
     [SerializeField] private Transform chatContent;          // Content del ScrollView
@@ -35,6 +37,8 @@ public class ChatManager : NetworkBehaviour
     private void ToggleChat(bool open)
     {
         chatOpen = open;
+        IsChatOpen = open;
+
         chatInput.interactable = open;
         chatInput.text = string.Empty;
 
@@ -92,3 +96,4 @@ public class ChatManager : NetworkBehaviour
         }
     }
 }
+

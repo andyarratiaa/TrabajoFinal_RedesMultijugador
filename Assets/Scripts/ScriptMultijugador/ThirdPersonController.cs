@@ -58,7 +58,7 @@ public class ThirdPersonController : MonoBehaviour
     // Update is only being used here to identify keys and trigger animations
     void Update()
     {
-        if (PauseMenuManager.IsPaused)
+        if (PauseMenuManager.IsPaused || ChatManager.IsChatOpen)
         {
             inputHorizontal = 0f;
             inputVertical = 0f;
@@ -120,6 +120,8 @@ public class ThirdPersonController : MonoBehaviour
     // With the inputs and animations defined, FixedUpdate is responsible for applying movements and actions to the player
     private void FixedUpdate()
     {
+        if (ChatManager.IsChatOpen) return;
+
 
         // Sprinting velocity boost or crounching desacelerate
         float velocityAdittion = 0;

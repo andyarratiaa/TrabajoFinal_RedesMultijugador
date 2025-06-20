@@ -50,6 +50,16 @@ public class PuzzleDoor : NetworkBehaviour
             }
         }
     }
+
+    public static bool AreDoorsOpen()
+    {
+        foreach (var door in allDoors)
+        {
+            if (!door.puertaAbierta.Value)
+                return false;
+        }
+        return true;
+    }
 }
 
 
