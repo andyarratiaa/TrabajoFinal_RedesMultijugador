@@ -7,31 +7,29 @@ public class PuzzleUIManager : MonoBehaviour
 
     [SerializeField] private TMP_Text collectedText;
 
+    private int currentCollected = 0;
     private int totalRequired = 0;
 
-    private void Awake()
-    {
-        Instance = this;
-    }
+    private void Awake() => Instance = this;
 
     public void SetTotalRequired(int total)
     {
         totalRequired = total;
-        UpdateText(0);
+        UpdateText();
     }
 
     public void SetCollected(int count)
     {
-        UpdateText(count);
+        currentCollected = count;
+        UpdateText();
     }
 
-    private void UpdateText(int collected)
+    private void UpdateText()
     {
         if (collectedText != null)
-        {
-            collectedText.text = $"Objetos recogidos: {collected} / {totalRequired}";
-        }
+            collectedText.text = $"Objetos recogidos: {currentCollected} / {totalRequired}";
     }
 }
+
 
 

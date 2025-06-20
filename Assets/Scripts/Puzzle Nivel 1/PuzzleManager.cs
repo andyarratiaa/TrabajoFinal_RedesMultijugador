@@ -1,105 +1,138 @@
-﻿using Unity.Netcode;
+﻿using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
-using System.Collections.Generic;
 
 public class PuzzleManager : NetworkBehaviour
 {
     public static PuzzleManager Instance;
 
+    [Header("Set in Inspector")]
     [SerializeField] private GameObject puzzleItemPrefab;
     [SerializeField] private Collider[] puzzleItemSpawnZones;
 
-    private Dictionary<ulong, bool> collectedByClient = new Dictionary<ulong, bool>();
-    private NetworkVariable<int> collectedCount = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private int totalRequired = 0;
+    // ▼ Datos por-jugador
+    private readonly Dictionary<ulong, bool> collectedByClient = new();
 
-    private void Awake()
-    {
-        Instance = this;
-    }
+    // ▼ Variables sincronizadas
+    private readonly NetworkVariable<int> collectedCount = new(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    private readonly NetworkVariable<int> totalRequired = new(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    private void Awake() => Instance = this;
+
+    // ──────────────────────────────────────────────────────────────────────────────
+    #region Network lifecycle
+    // ──────────────────────────────────────────────────────────────────────────────
     public override void OnNetworkSpawn()
     {
         if (IsServer)
         {
-            totalRequired = 0;
-            collectedByClient.Clear();
+            // 1) Objetos para los clientes que YA están
+            InitializeExistingClients();
 
-            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
-            {
-                ulong clientId = client.ClientId;
-                collectedByClient[clientId] = false;
-
-                Vector3 spawnPos = GetRandomSpawnPosition();
-                GameObject item = Instantiate(puzzleItemPrefab, spawnPos, Quaternion.identity);
-                item.GetComponent<NetworkObject>().Spawn();
-
-                var itemScript = item.GetComponent<PuzzleItem>();
-                itemScript.SetAssignedClientId(clientId);
-
-                totalRequired++;
-            }
-
-            SetTotalRequiredClientRpc(totalRequired);
+            // 2) Objetos para los que lleguen después
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
         }
 
-        collectedCount.OnValueChanged += (oldValue, newValue) =>
-        {
-            if (PuzzleUIManager.Instance != null)
-            {
-                PuzzleUIManager.Instance.SetCollected(newValue);
-            }
-        };
+        // Actualizar HUD cuando cambie algo
+        collectedCount.OnValueChanged += (_, newValue) =>
+            PuzzleUIManager.Instance?.SetCollected(newValue);
 
-        // Mostrar valores iniciales al entrar a escena
-        if (PuzzleUIManager.Instance != null)
-        {
-            PuzzleUIManager.Instance.SetCollected(collectedCount.Value);
-        }
+        totalRequired.OnValueChanged += (_, newValue) =>
+            PuzzleUIManager.Instance?.SetTotalRequired(newValue);
+
+        // Mostrar valores actuales a quien acaba de entrar
+        PuzzleUIManager.Instance?.SetCollected(collectedCount.Value);
+        PuzzleUIManager.Instance?.SetTotalRequired(totalRequired.Value);
     }
 
+    private void OnDestroy()
+    {
+        if (IsServer && NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+        }
+    }
+    #endregion
+
+    // ──────────────────────────────────────────────────────────────────────────────
+    #region Servidor – spawn por jugador
+    // ──────────────────────────────────────────────────────────────────────────────
+    private void InitializeExistingClients()
+    {
+        collectedByClient.Clear();
+        totalRequired.Value = 0;
+
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            SpawnItemForClient(client.ClientId);
+    }
+
+    private void OnClientConnected(ulong clientId) => SpawnItemForClient(clientId);
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        // Limpieza opcional: ajustar el total para que la puerta se siga abriendo
+        if (collectedByClient.Remove(clientId))
+            totalRequired.Value--;
+    }
+
+    private void SpawnItemForClient(ulong clientId)
+    {
+        collectedByClient[clientId] = false;
+
+        Vector3 pos = GetRandomSpawnPosition();
+        var itemObj = Instantiate(puzzleItemPrefab, pos, Quaternion.identity);
+
+        itemObj.GetComponent<NetworkObject>().Spawn();
+        itemObj.GetComponent<PuzzleItem>().SetAssignedClientId(clientId);
+
+        totalRequired.Value++;
+    }
+    #endregion
+
+    // ──────────────────────────────────────────────────────────────────────────────
+    #region Lógica de recolección
+    // ──────────────────────────────────────────────────────────────────────────────
     [ServerRpc(RequireOwnership = false)]
     public void NotifyCollectedServerRpc(ulong clientId)
     {
-        if (!collectedByClient.ContainsKey(clientId) || collectedByClient[clientId])
-            return;
+        if (!collectedByClient.TryGetValue(clientId, out bool already) || already) return;
 
         collectedByClient[clientId] = true;
         collectedCount.Value++;
 
         if (AllCollected())
-        {
             PuzzleDoor.SetAllDoorsOpen();
-        }
     }
 
     private bool AllCollected()
     {
-        foreach (bool collected in collectedByClient.Values)
-            if (!collected) return false;
+        foreach (bool done in collectedByClient.Values)
+            if (!done) return false;
         return true;
     }
+    #endregion
 
+    // ──────────────────────────────────────────────────────────────────────────────
+    #region Utilidades privadas
+    // ──────────────────────────────────────────────────────────────────────────────
     private Vector3 GetRandomSpawnPosition()
     {
-        Collider zone = puzzleItemSpawnZones[Random.Range(0, puzzleItemSpawnZones.Length)];
-        Bounds bounds = zone.bounds;
+        var zone = puzzleItemSpawnZones[Random.Range(0, puzzleItemSpawnZones.Length)];
+        var b = zone.bounds;
         return new Vector3(
-            Random.Range(bounds.min.x, bounds.max.x),
-            bounds.min.y,
-            Random.Range(bounds.min.z, bounds.max.z)
+            Random.Range(b.min.x, b.max.x),
+            b.min.y,
+            Random.Range(b.min.z, b.max.z)
         );
     }
-
-    [ClientRpc]
-    private void SetTotalRequiredClientRpc(int total)
-    {
-        if (PuzzleUIManager.Instance != null)
-        {
-            PuzzleUIManager.Instance.SetTotalRequired(total);
-        }
-    }
+    #endregion
 }
+
 
 
 
