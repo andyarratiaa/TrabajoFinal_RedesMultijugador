@@ -25,17 +25,20 @@ public class PuzzleItem : NetworkBehaviour
 
     private void Collect()
     {
-        TryDespawnServerRpc(); // Solo notificamos al servidor
+        if (IsOwner && PuzzleUIManager.Instance != null)
+        {
+            // No modificamos aquí UI ya que se actualizará con el OnValueChanged desde el PuzzleManager
+        }
+
+        TryDespawnServerRpc();
     }
-   
+
     [ServerRpc(RequireOwnership = false)]
     private void TryDespawnServerRpc(ServerRpcParams rpcParams = default)
     {
         PuzzleManager.Instance?.NotifyCollectedServerRpc(assignedClientId.Value);
-        GetComponent<NetworkObject>().Despawn(); // Esto sí lo elimina en todos los clientes sincronizados
+        GetComponent<NetworkObject>().Despawn();
     }
-
-
 
     public void SetAssignedClientId(ulong clientId)
     {
@@ -43,12 +46,6 @@ public class PuzzleItem : NetworkBehaviour
         {
             assignedClientId.Value = clientId;
         }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void NotifyCollectedServerRpc(ulong clientId)
-    {
-        PuzzleManager.Instance?.NotifyCollectedServerRpc(clientId);
     }
 }
 

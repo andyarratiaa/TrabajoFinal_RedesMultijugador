@@ -1,18 +1,37 @@
-using System.Collections;
-using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
-public class PuzzleUiManager : MonoBehaviour
+public class PuzzleUIManager : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    public static PuzzleUIManager Instance;
+
+    [SerializeField] private TMP_Text collectedText;
+
+    private int totalRequired = 0;
+
+    private void Awake()
     {
-        
+        Instance = this;
     }
 
-    // Update is called once per frame
-    void Update()
+    public void SetTotalRequired(int total)
     {
-        
+        totalRequired = total;
+        UpdateText(0);
+    }
+
+    public void SetCollected(int count)
+    {
+        UpdateText(count);
+    }
+
+    private void UpdateText(int collected)
+    {
+        if (collectedText != null)
+        {
+            collectedText.text = $"Objetos recogidos: {collected} / {totalRequired}";
+        }
     }
 }
+
+

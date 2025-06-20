@@ -10,6 +10,8 @@ public class PuzzleManager : NetworkBehaviour
     [SerializeField] private Collider[] puzzleItemSpawnZones;
 
     private Dictionary<ulong, bool> collectedByClient = new Dictionary<ulong, bool>();
+    private NetworkVariable<int> collectedCount = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private int totalRequired = 0;
 
     private void Awake()
     {
@@ -18,26 +20,53 @@ public class PuzzleManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (!IsServer) return;
-
-        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        if (IsServer)
         {
-            ulong clientId = client.ClientId;
-            collectedByClient[clientId] = false;
+            totalRequired = 0;
+            collectedByClient.Clear();
 
-            Vector3 spawnPos = GetRandomSpawnPosition();
-            GameObject item = Instantiate(puzzleItemPrefab, spawnPos, Quaternion.identity);
-            item.GetComponent<NetworkObject>().Spawn();
+            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                ulong clientId = client.ClientId;
+                collectedByClient[clientId] = false;
 
-            var itemScript = item.GetComponent<PuzzleItem>();
-            itemScript.SetAssignedClientId(clientId);
+                Vector3 spawnPos = GetRandomSpawnPosition();
+                GameObject item = Instantiate(puzzleItemPrefab, spawnPos, Quaternion.identity);
+                item.GetComponent<NetworkObject>().Spawn();
+
+                var itemScript = item.GetComponent<PuzzleItem>();
+                itemScript.SetAssignedClientId(clientId);
+
+                totalRequired++;
+            }
+
+            SetTotalRequiredClientRpc(totalRequired);
+        }
+
+        collectedCount.OnValueChanged += (oldValue, newValue) =>
+        {
+            if (PuzzleUIManager.Instance != null)
+            {
+                PuzzleUIManager.Instance.SetCollected(newValue);
+            }
+        };
+
+        // Mostrar valores iniciales al entrar a escena
+        if (PuzzleUIManager.Instance != null)
+        {
+            PuzzleUIManager.Instance.SetCollected(collectedCount.Value);
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
     public void NotifyCollectedServerRpc(ulong clientId)
     {
+        if (!collectedByClient.ContainsKey(clientId) || collectedByClient[clientId])
+            return;
+
         collectedByClient[clientId] = true;
+        collectedCount.Value++;
+
         if (AllCollected())
         {
             PuzzleDoor.SetAllDoorsOpen();
@@ -61,7 +90,18 @@ public class PuzzleManager : NetworkBehaviour
             Random.Range(bounds.min.z, bounds.max.z)
         );
     }
+
+    [ClientRpc]
+    private void SetTotalRequiredClientRpc(int total)
+    {
+        if (PuzzleUIManager.Instance != null)
+        {
+            PuzzleUIManager.Instance.SetTotalRequired(total);
+        }
+    }
 }
+
+
 
 
 
