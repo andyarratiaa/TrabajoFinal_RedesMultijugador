@@ -10,8 +10,9 @@ public class PuzzleManager : NetworkBehaviour
     [SerializeField] private GameObject puzzleItemPrefab;
     [SerializeField] private Collider[] puzzleItemSpawnZones;
 
-    // ▼ Datos por-jugador
+    // ▼ Datos por jugador
     private readonly Dictionary<ulong, bool> collectedByClient = new();
+    private readonly Dictionary<ulong, NetworkObject> itemByClient = new();   // ← NUEVO
 
     // ▼ Variables sincronizadas
     private readonly NetworkVariable<int> collectedCount = new(
@@ -23,33 +24,29 @@ public class PuzzleManager : NetworkBehaviour
     private void Awake() => Instance = this;
 
     // ──────────────────────────────────────────────────────────────────────────────
-    #region Network lifecycle
+    #region Ciclo de red
     // ──────────────────────────────────────────────────────────────────────────────
     public override void OnNetworkSpawn()
     {
         if (IsServer)
         {
-            // 1) Objetos para los clientes que YA están
             InitializeExistingClients();
 
-            // 2) Objetos para los que lleguen después
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
         }
 
-        // Actualizar HUD cuando cambie algo
-        collectedCount.OnValueChanged += (_, newValue) =>
-            PuzzleUIManager.Instance?.SetCollected(newValue);
+        collectedCount.OnValueChanged += (_, newVal) =>
+            PuzzleUIManager.Instance?.SetCollected(newVal);
 
-        totalRequired.OnValueChanged += (_, newValue) =>
-            PuzzleUIManager.Instance?.SetTotalRequired(newValue);
+        totalRequired.OnValueChanged += (_, newVal) =>
+            PuzzleUIManager.Instance?.SetTotalRequired(newVal);
 
-        // Mostrar valores actuales a quien acaba de entrar
         PuzzleUIManager.Instance?.SetCollected(collectedCount.Value);
         PuzzleUIManager.Instance?.SetTotalRequired(totalRequired.Value);
     }
 
-    private void OnDestroy()
+    public override void OnNetworkDespawn()
     {
         if (IsServer && NetworkManager.Singleton != null)
         {
@@ -60,11 +57,12 @@ public class PuzzleManager : NetworkBehaviour
     #endregion
 
     // ──────────────────────────────────────────────────────────────────────────────
-    #region Servidor – spawn por jugador
+    #region Servidor – spawn y limpieza por jugador
     // ──────────────────────────────────────────────────────────────────────────────
     private void InitializeExistingClients()
     {
         collectedByClient.Clear();
+        itemByClient.Clear();
         totalRequired.Value = 0;
 
         foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
@@ -75,7 +73,15 @@ public class PuzzleManager : NetworkBehaviour
 
     private void OnClientDisconnected(ulong clientId)
     {
-        // Limpieza opcional: ajustar el total para que la puerta se siga abriendo
+        // 1) Despawn y destroy del objeto del jugador que se va
+        if (itemByClient.TryGetValue(clientId, out var netObj))
+        {
+            if (netObj != null && netObj.IsSpawned)
+                netObj.Despawn(true);      // true ⇒ también Destroy()
+            itemByClient.Remove(clientId);
+        }
+
+        // 2) Ajustar las estructuras lógicas
         if (collectedByClient.Remove(clientId))
             totalRequired.Value--;
     }
@@ -85,10 +91,14 @@ public class PuzzleManager : NetworkBehaviour
         collectedByClient[clientId] = false;
 
         Vector3 pos = GetRandomSpawnPosition();
-        var itemObj = Instantiate(puzzleItemPrefab, pos, Quaternion.identity);
+        var itemObj = Instantiate(puzzleItemPrefab, pos, Quaternion.identity)
+                          .GetComponent<NetworkObject>();
 
-        itemObj.GetComponent<NetworkObject>().Spawn();
+        itemObj.Spawn();
         itemObj.GetComponent<PuzzleItem>().SetAssignedClientId(clientId);
+
+        // Guardar referencia para poder despawnearlo luego
+        itemByClient[clientId] = itemObj;
 
         totalRequired.Value++;
     }
@@ -132,6 +142,7 @@ public class PuzzleManager : NetworkBehaviour
     }
     #endregion
 }
+
 
 
 
