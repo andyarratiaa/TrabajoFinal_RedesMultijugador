@@ -27,7 +27,7 @@ public class PuzzleUIManager : MonoBehaviour
     private void UpdateText()
     {
         if (collectedText != null)
-            collectedText.text = $"Objetos recogidos: {currentCollected} / {totalRequired}";
+            collectedText.text = $"{currentCollected} / {totalRequired}";
     }
 }
 

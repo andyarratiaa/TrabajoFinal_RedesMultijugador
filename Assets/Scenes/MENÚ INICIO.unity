@@ -339,9 +339,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1817180466}
-        m_TargetAssemblyTypeName: MainMenuManager, Assembly-CSharp
-        m_MethodName: OnNameEntered
+      - m_Target: {fileID: 110880249}
+        m_TargetAssemblyTypeName: RelayManager, Assembly-CSharp
+        m_MethodName: StartRelay
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -351,9 +351,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 110880249}
-        m_TargetAssemblyTypeName: RelayManager, Assembly-CSharp
-        m_MethodName: StartRelay
+      - m_Target: {fileID: 1817180466}
+        m_TargetAssemblyTypeName: MainMenuManager, Assembly-CSharp
+        m_MethodName: OnNameEntered
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -683,7 +683,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.5000038}
+  m_AnchoredPosition: {x: 0, y: -0.5}
   m_SizeDelta: {x: -20, y: -13}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &398142103
@@ -732,10 +732,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1601634130}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.020000001, y: 0.887}
-  m_AnchorMax: {x: 0.29233342, y: 0.94462967}
-  m_AnchoredPosition: {x: 0.87060547, y: -1}
-  m_SizeDelta: {x: 1.7413025, y: -2.6058006}
+  m_AnchorMin: {x: 0.020000001, y: 0.8888519}
+  m_AnchorMax: {x: 0.35325006, y: 0.94462967}
+  m_AnchoredPosition: {x: 1.8909912, y: -2}
+  m_SizeDelta: {x: 3.7819977, y: -0.6057999}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &539240554
 MonoBehaviour:
@@ -978,7 +978,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.35200003, y: 0.25962967}
   m_AnchorMax: {x: 0.6393749, y: 0.36748153}
-  m_AnchoredPosition: {x: 0.33190918, y: 1.9500122}
+  m_AnchoredPosition: {x: 0.33190918, y: 1.9499512}
   m_SizeDelta: {x: 2.1767578, y: 5.891388}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &851234706
@@ -1025,9 +1025,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1817180466}
-        m_TargetAssemblyTypeName: MainMenuManager, Assembly-CSharp
-        m_MethodName: OnNameEntered
+      - m_Target: {fileID: 110880249}
+        m_TargetAssemblyTypeName: RelayManager, Assembly-CSharp
+        m_MethodName: JoinRelay
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1037,9 +1037,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 110880249}
-        m_TargetAssemblyTypeName: RelayManager, Assembly-CSharp
-        m_MethodName: JoinRelay
+      - m_Target: {fileID: 1817180466}
+        m_TargetAssemblyTypeName: MainMenuManager, Assembly-CSharp
+        m_MethodName: OnNameEntered
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1412,7 +1412,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.27800003, y: 0.78859264}
   m_AnchorMax: {x: 0.7233543, y: 0.9241482}
-  m_AnchoredPosition: {x: -1.0000305, y: -1}
+  m_AnchoredPosition: {x: -1, y: -1}
   m_SizeDelta: {x: 3.018921, y: -3.2969055}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1020581862
@@ -1819,7 +1819,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.35200003, y: 0.409}
   m_AnchorMax: {x: 0.6393749, y: 0.4823334}
-  m_AnchoredPosition: {x: -0.6668091, y: 0.24925232}
+  m_AnchoredPosition: {x: -0.6668091, y: 0.24926758}
   m_SizeDelta: {x: -0.14001465, y: -2.1977005}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1350726576
@@ -2037,7 +2037,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.5000038}
+  m_AnchoredPosition: {x: 0, y: -0.5}
   m_SizeDelta: {x: -20, y: -13}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1365534340
@@ -3086,5 +3086,5 @@ SceneRoots:
   - {fileID: 1588214291}
   - {fileID: 5848642140603439671}
   - {fileID: 1817180467}
-  - {fileID: 169318261}
   - {fileID: 1353986353}
+  - {fileID: 169318261}

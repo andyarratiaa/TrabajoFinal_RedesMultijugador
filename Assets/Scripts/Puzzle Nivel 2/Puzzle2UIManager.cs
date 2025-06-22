@@ -23,12 +23,12 @@ public class Puzzle2UIManager : MonoBehaviour
     private void UpdateA()
     {
         if (collectedTextA != null)
-            collectedTextA.text = $"{labelA}: {collectedA} / {totalA}";
+            collectedTextA.text = $"{collectedA} / {totalA}";
     }
 
     private void UpdateB()
     {
         if (collectedTextB != null)
-            collectedTextB.text = $"{labelB}: {collectedB} / {totalB}";
+            collectedTextB.text = $"{collectedB} / {totalB}";
     }
 }
