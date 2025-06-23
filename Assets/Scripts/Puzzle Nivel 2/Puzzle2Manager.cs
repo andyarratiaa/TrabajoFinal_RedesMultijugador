@@ -142,13 +142,19 @@ public class Puzzle2Manager : NetworkBehaviour
         }
 
         if (AllCollected())
-            Puzzle2Door.SetAllDoorsOpen();
+        {
+            // Deja que CoopSwitchManager decida abrir la puerta
+            CoopSwitchManager.Instance?.NotifySwitchChanged();
+        }
+
     }
 
     private bool AllCollected()
     {
         return collectedA.Value >= totalRequiredA.Value && collectedB.Value >= totalRequiredB.Value;
     }
+
+    public bool AllObjectsCollected => AllCollected();
     #endregion
 
     // ──────────────────────────────────────────────────────────────────────────────
