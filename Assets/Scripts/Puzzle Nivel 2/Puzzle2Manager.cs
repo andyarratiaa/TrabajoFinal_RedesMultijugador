@@ -167,4 +167,15 @@ public class Puzzle2Manager : NetworkBehaviour
         return new Vector3(Random.Range(b.min.x, b.max.x), b.min.y, Random.Range(b.min.z, b.max.z));
     }
     #endregion
+
+    // Despawnea todos los objetos A/B que queden vivos
+    [ServerRpc(RequireOwnership = false)]
+    public void DespawnAllItemsServerRpc()
+    {
+        foreach (var kv in itemAByClient.Values)
+            if (kv != null && kv.IsSpawned) kv.Despawn(true);
+
+        foreach (var kv in itemBByClient.Values)
+            if (kv != null && kv.IsSpawned) kv.Despawn(true);
+    }
 }

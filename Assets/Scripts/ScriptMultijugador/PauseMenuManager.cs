@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 
 public class PauseMenuManager : MonoBehaviour
@@ -10,49 +8,55 @@ public class PauseMenuManager : MonoBehaviour
 
     [SerializeField] private GameObject pauseMenuHolder;
 
+    /* Acceso global al estado de pausa */
+    public static bool IsPaused => staticReference != null && staticReference.isPaused;
 
-    public static bool IsPaused
-    {
-        get
-        {
-            return staticReference != null && staticReference.isPaused;
-        }
-    }
-
-    void Awake()
+    private void Awake()
     {
         if (staticReference != null)
-        {
             Destroy(staticReference.gameObject);
-        }
 
         staticReference = this;
         pauseMenuHolder.SetActive(isPaused);
     }
 
-    void Update()
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             isPaused = !isPaused;
-            UnityEngine.Cursor.lockState = isPaused ? CursorLockMode.None : CursorLockMode.Locked;
-            UnityEngine.Cursor.visible = isPaused ? true : false;
             pauseMenuHolder.SetActive(isPaused);
+
+            UpdateCursorState();          // ← ¡usa la lógica centralizada!
         }
     }
 
-    public void DisconnectFromServer()
+    private void UpdateCursorState()
     {
-        NetworkManager.Singleton.Shutdown();
+        bool loseOpen = Level2UIManager.IsLosePanelOpen;
+        bool introOpen = Level1IntroUIManager.IsIntroOpen;   // ← NUEVO
+        bool intro2Open = Level2IntroUIManager.IsIntroOpen;
+
+        bool show = isPaused || loseOpen || introOpen || intro2Open;
+
+        Cursor.lockState = show ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = show;
     }
 
-    public void Exit()
+    /*  Coloca el método dentro de la clase PauseMenuManager,
+    justo debajo de UpdateCursorState() o donde prefieras. */
+    public void ForceUpdateCursor()
     {
-        Application.Quit();
+        UpdateCursorState();
     }
 
 
+
+    /* ── Llamadas desde los botones del menú ── */
+    public void DisconnectFromServer() => NetworkManager.Singleton.Shutdown();
+    public void Exit() => Application.Quit();
 }
+
 
 
 

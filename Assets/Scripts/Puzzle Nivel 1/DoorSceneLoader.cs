@@ -15,12 +15,12 @@ public class DoorSceneLoader : NetworkBehaviour
         // ✅ Solo cambiar de escena si todas las puertas están abiertas
         if (PuzzleDoor.AreDoorsOpen())
         {
-            Debug.Log("🚪 Todas las puertas abiertas. Cambiando de escena...");
+            Debug.Log("Todas las puertas abiertas. Cambiando de escena...");
             NetworkManager.Singleton.SceneManager.LoadScene(nextSceneName, LoadSceneMode.Single);
         }
         else
         {
-            Debug.Log("❌ Las puertas aún no están abiertas.");
+            Debug.Log("Las puertas aún no están abiertas.");
         }
     }
 }

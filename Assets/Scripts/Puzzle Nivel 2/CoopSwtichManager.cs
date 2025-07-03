@@ -1,5 +1,4 @@
-﻿// Assets/Scripts/Coop/CoopSwitchManager.cs
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 
 public class CoopSwitchManager : NetworkBehaviour

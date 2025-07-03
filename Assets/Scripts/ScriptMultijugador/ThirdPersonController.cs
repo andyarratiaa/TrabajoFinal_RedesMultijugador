@@ -58,7 +58,7 @@ public class ThirdPersonController : MonoBehaviour
     // Update is only being used here to identify keys and trigger animations
     void Update()
     {
-        if (PauseMenuManager.IsPaused || ChatManager.IsChatOpen)
+        if (PauseMenuManager.IsPaused || ChatManager.IsChatOpen || Level2UIManager.IsLosePanelOpen || Level1IntroUIManager.IsIntroOpen || Level2IntroUIManager.IsIntroOpen)
         {
             inputHorizontal = 0f;
             inputVertical = 0f;

@@ -15,22 +15,25 @@ public class ChatManager : NetworkBehaviour
 
     private void Update()
     {
+        if (Level1IntroUIManager.IsIntroOpen) return;   // ← NUEVO
+
+        if (Level2IntroUIManager.IsIntroOpen) return;
+
+        /* 1. NO permitir abrir chat si el Lose Panel está activo */
+        if (Level2UIManager.IsLosePanelOpen) return;   // ← NUEVO
+
         // Abrir chat con T
         if (!chatOpen && Input.GetKeyDown(KeyCode.T))
-        {
             ToggleChat(true);
-        }
 
         // Si chat está abierto y se presiona Enter
         if (chatOpen && Input.GetKeyDown(KeyCode.Return))
         {
             if (!string.IsNullOrWhiteSpace(chatInput.text))
-            {
                 SendMessageServerRpc(chatInput.text.Trim());
-            }
 
             chatInput.text = string.Empty;
-            ToggleChat(false); // Cerrar chat al enviar
+            ToggleChat(false);
         }
     }
 
