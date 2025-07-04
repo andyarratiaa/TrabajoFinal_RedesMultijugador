@@ -17,7 +17,7 @@ public class SettingsMenu : MonoBehaviour
 
     Resolution[] resolutions;
 
-    void Start ()
+    void Start()
     {
         resolutions = Screen.resolutions;
 
@@ -43,36 +43,37 @@ public class SettingsMenu : MonoBehaviour
         resolutionsDropdown.RefreshShownValue();
     }
 
-    public void SetResolution (int resolutionIndex)
+    public void SetResolution(int resolutionIndex)
     {
         Resolution resolution = resolutions[resolutionIndex];
         Screen.SetResolution(resolution.width, resolution.height, Screen.fullScreen);
     }
 
-    public void SetVolume (float volume)
+    public void SetVolume(float volume)
     {
         audioMixer.SetFloat("volume", volume);
     }
 
-    public void MuteVolume (bool mute)
+    public void MuteVolume(bool mute)
     {
         if (mute)
         {
             audioMixer.SetFloat("volume", 0);
-        } else{
+        }
+        else
+        {
 
             audioMixer.SetFloat("volume", -80);
         }
     }
 
-    public void SetQuality (int qualityIndex)
+    public void SetQuality(int qualityIndex)
     {
         QualitySettings.SetQualityLevel(qualityIndex);
     }
 
-    public void SetFullscreen (bool isFullscreen)
+    public void SetFullscreen(bool isFullscreen)
     {
         Screen.fullScreen = isFullscreen;
     }
 }
-
