@@ -1,37 +1,30 @@
-﻿// Assets/Scripts/Puzzle Nivel 2/Puzzle2Item.cs
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 
-/* El enum sigue igual */
 public enum Puzzle2ItemKind { ItemA, ItemB }
 
 public class Puzzle2Item : NetworkBehaviour
 {
-    /*  ►► 1. Variables sincronizadas  ◄◄  */
     private readonly NetworkVariable<ulong> assignedClientId = new();
-    private readonly NetworkVariable<int> kindValue = new();   // 0 = A, 1 = B
+    private readonly NetworkVariable<int> kindValue = new();
 
     private bool isCollected = false;
 
-    /* Propiedad de conveniencia */
     public Puzzle2ItemKind Kind => (Puzzle2ItemKind)kindValue.Value;
 
-    /*  ►► 2. Inicializa SOLO en el servidor  ◄◄  */
     public void Initialize(ulong clientId, Puzzle2ItemKind kind)
     {
         if (!IsServer) return;
 
         assignedClientId.Value = clientId;
-        kindValue.Value = (int)kind;   // se replica automáticamente
+        kindValue.Value = (int)kind;  
     }
 
-    /*  ►► 3. Recolección (ejecuta en cada cliente)  ◄◄  */
     private void OnTriggerStay(Collider other)
     {
         if (isCollected) return;
         if (!other.CompareTag("Player")) return;
 
-        /* Solo el dueño de este objeto puede recogerlo */
         if (NetworkManager.Singleton.LocalClientId == assignedClientId.Value &&
             Input.GetKeyDown(KeyCode.E))
         {
@@ -40,7 +33,6 @@ public class Puzzle2Item : NetworkBehaviour
         }
     }
 
-    /*  ►► 4. Notifica al servidor y despawnea  ◄◄  */
     private void Collect()
     {
         TryNotifyAndDespawnServerRpc(kindValue.Value, assignedClientId.Value);

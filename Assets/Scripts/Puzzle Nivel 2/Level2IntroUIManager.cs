@@ -32,7 +32,7 @@ public class Level2IntroUIManager : NetworkBehaviour
         IsIntroOpen = false;
         LockCursor();
 
-        Debug.Log("🔘 [CLIENT " + OwnerClientId + "] Pulsó Comenzar.");
+        Debug.Log("[CLIENT " + OwnerClientId + "] Pulsó Comenzar.");
 
 
         RequestStartTimerServerRpc();

@@ -81,7 +81,7 @@ public class ChatManager : NetworkBehaviour
     [ClientRpc]
     private void BroadcastMessageClientRpc(string message)
     {
-        Debug.Log($"📨 Mensaje recibido: {message}");
+        Debug.Log($"Mensaje recibido: {message}");
 
         GameObject instance = Instantiate(chatMessagePrefab, chatContent);
 
@@ -92,7 +92,7 @@ public class ChatManager : NetworkBehaviour
         }
         else
         {
-            Debug.LogWarning("❌ No se encontró TMP_Text en el prefab del mensaje.");
+            Debug.LogWarning("No se encontró TMP_Text en el prefab del mensaje.");
         }
     }
 }

@@ -15,7 +15,7 @@ public class DoorScene2Loader : NetworkBehaviour
 
         if (Puzzle2Door.AreDoorsOpen())
         {
-            Debug.Log("🚪 Puertas del nivel 2 abiertas. Cargando siguiente escena...");
+            Debug.Log("Puertas del nivel 2 abiertas. Cargando siguiente escena...");
 
             NetworkManager.Singleton.SceneManager.LoadScene(nextSceneName, LoadSceneMode.Additive);
 
@@ -33,7 +33,7 @@ public class DoorScene2Loader : NetworkBehaviour
         if (activeScene.isLoaded && activeScene.name != nextSceneName)
         {
             SceneManager.UnloadSceneAsync(activeScene);
-            Debug.Log("🧹 Escena anterior descargada.");
+            Debug.Log("Escena anterior descargada.");
         }
     }
 }
