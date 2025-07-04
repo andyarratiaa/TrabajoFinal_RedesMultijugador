@@ -44,7 +44,7 @@ public class Level2Timer : NetworkBehaviour
     void ShowDefeatClientRpc() =>
         Level2UIManager.Instance?.ShowLosePanel();
 
-    /* Llamado por la Intro (en el servidor) */
+
     public void StartCountdown()
     {
         if (!countdownStarted.Value)

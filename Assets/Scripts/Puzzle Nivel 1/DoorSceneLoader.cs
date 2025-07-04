@@ -1,5 +1,4 @@
-﻿// DoorSceneLoader.cs
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.SceneManagement;
 
@@ -12,7 +11,7 @@ public class DoorSceneLoader : NetworkBehaviour
         if (!IsServer) return;
         if (!other.CompareTag("Player")) return;
 
-        // ✅ Solo cambiar de escena si todas las puertas están abiertas
+
         if (PuzzleDoor.AreDoorsOpen())
         {
             Debug.Log("Todas las puertas abiertas. Cambiando de escena...");

@@ -11,7 +11,7 @@ public class PuzzleManager : NetworkBehaviour
     [SerializeField] private Collider[] puzzleItemSpawnZones;
 
     [Header("Audio")]
-    [SerializeField] private AudioClip pickupClip;   // sonido de recoger
+    [SerializeField] private AudioClip pickupClip;
     [SerializeField] private float pickupVolume = 1f;
 
     /* ▼ Datos por jugador */
@@ -29,7 +29,6 @@ public class PuzzleManager : NetworkBehaviour
 
     private void Awake() => Instance = this;
 
-    /* ─────────────────────────── Ciclo de red ─────────────────────────── */
     public override void OnNetworkSpawn()
     {
         if (IsServer)
@@ -55,7 +54,6 @@ public class PuzzleManager : NetworkBehaviour
         }
     }
 
-    /* ───────────────────── Servidor – spawn y limpieza ───────────────────── */
     private void InitializeExistingClients()
     {
         collectedByClient.Clear();
@@ -94,7 +92,6 @@ public class PuzzleManager : NetworkBehaviour
         totalRequired.Value++;
     }
 
-    /* ────────────────────────── Lógica de recolección ───────────────────────── */
     [ServerRpc(RequireOwnership = false)]
     public void NotifyCollectedServerRpc(ulong cid)
     {
@@ -103,7 +100,6 @@ public class PuzzleManager : NetworkBehaviour
         collectedByClient[cid] = true;
         collectedCount.Value++;
 
-        /* ▶ Reproduce sonido en todos los clientes en la posición del objeto */
         if (itemByClient.TryGetValue(cid, out NetworkObject obj) && obj != null)
             PlayPickupSoundClientRpc(obj.transform.position);
 
@@ -111,7 +107,7 @@ public class PuzzleManager : NetworkBehaviour
             PuzzleDoor.SetAllDoorsOpen();
     }
 
-    /* Sonido de recogida: se ejecuta en TODOS los clientes */
+
     [ClientRpc]
     private void PlayPickupSoundClientRpc(Vector3 worldPos)
     {
@@ -126,7 +122,6 @@ public class PuzzleManager : NetworkBehaviour
         return true;
     }
 
-    /* ───────────────────────────── Utilidades ───────────────────────────── */
     private Vector3 GetRandomSpawnPosition()
     {
         var zone = puzzleItemSpawnZones[Random.Range(0, puzzleItemSpawnZones.Length)];

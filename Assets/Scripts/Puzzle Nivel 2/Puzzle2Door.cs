@@ -5,16 +5,11 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Animator))]
 public class Puzzle2Door : NetworkBehaviour
 {
-    /* ────────────────────────────────────────────────
-       ‖ Configuración de audio                      ‖
-       ─────────────────────────────────────────────── */
     [Header("Audio")]
-    [SerializeField] private AudioClip openClip;           // Clip de apertura
-    [SerializeField] private bool playAtDoorPosition = true; // 3D-audio
+    [SerializeField] private AudioClip openClip;           
+    [SerializeField] private bool playAtDoorPosition = true; 
 
-    /* ────────────────────────────────────────────────
-       ‖ Puertas registradas en la escena            ‖
-       ─────────────────────────────────────────────── */
+
     private static readonly List<Puzzle2Door> allDoors = new();
 
     private Animator[] animators;
@@ -26,20 +21,18 @@ public class Puzzle2Door : NetworkBehaviour
         false, NetworkVariableReadPermission.Everyone,
                NetworkVariableWritePermission.Server);
 
-    /* ────────────────────────────────────────────────
-       ‖ Ciclo de vida                               ‖
-       ─────────────────────────────────────────────── */
+
     private void Awake()
     {
         animators = GetComponentsInChildren<Animator>(true);
 
-        /* AudioSource: reutiliza o crea uno */
+
         audioSource = GetComponent<AudioSource>() ?? gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
 
         if (playAtDoorPosition)
         {
-            audioSource.spatialBlend = 1f;                 // 3D
+            audioSource.spatialBlend = 1f;                
             audioSource.rolloffMode = AudioRolloffMode.Logarithmic;
         }
 
@@ -53,16 +46,12 @@ public class Puzzle2Door : NetworkBehaviour
             if (opened) PlayOpen();
         };
 
-        /* Si ya llega abierta */
         if (puertaAbierta.Value)
             PlayOpen();
     }
 
     public override void OnNetworkDespawn() => allDoors.Remove(this);
 
-    /* ────────────────────────────────────────────────
-       ‖ Animación + sonido                          ‖
-       ─────────────────────────────────────────────── */
     private void PlayOpen()
     {
         foreach (var anim in animators)
@@ -74,14 +63,11 @@ public class Puzzle2Door : NetworkBehaviour
         audioSource.Play();
     }
 
-    /* ────────────────────────────────────────────────
-       ‖ API estática                               ‖
-       ─────────────────────────────────────────────── */
     public static void SetAllDoorsOpen()
     {
         foreach (var door in allDoors)
             if (door != null && door.IsServer)
-                door.puertaAbierta.Value = true;   // sincroniza a todos
+                door.puertaAbierta.Value = true;   
     }
 
     public static bool AreDoorsOpen()

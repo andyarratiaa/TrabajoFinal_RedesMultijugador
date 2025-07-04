@@ -26,7 +26,6 @@ public class Level2IntroUIManager : NetworkBehaviour
             UnlockCursor();
     }
 
-    /* ── Botón “Comenzar” ── */
     private void OnStartClicked()
     {
         introPanel.SetActive(false);
@@ -35,13 +34,12 @@ public class Level2IntroUIManager : NetworkBehaviour
 
         Debug.Log("🔘 [CLIENT " + OwnerClientId + "] Pulsó Comenzar.");
 
-        /* ► solicita al servidor que arranque el cronómetro */
+
         RequestStartTimerServerRpc();
 
         FindObjectOfType<PauseMenuManager>()?.ForceUpdateCursor();
     }
 
-    /* ── RPC: se ejecuta en el servidor ── */
     [ServerRpc(RequireOwnership = false)]
     private void RequestStartTimerServerRpc()
     {
@@ -49,7 +47,6 @@ public class Level2IntroUIManager : NetworkBehaviour
             Level2Timer.Instance.StartCountdown();
     }
 
-    /* utilidades cursor */
     static void UnlockCursor()
     {
         Cursor.lockState = CursorLockMode.None; Cursor.visible = true;

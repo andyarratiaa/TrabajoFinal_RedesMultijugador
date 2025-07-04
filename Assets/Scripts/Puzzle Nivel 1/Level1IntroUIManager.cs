@@ -14,13 +14,12 @@ public class Level1IntroUIManager : MonoBehaviour
         IsIntroOpen = true;
         introPanel.SetActive(true);
 
-        UnlockCursor();                     // 1ª vez
+        UnlockCursor();                 
         startButton.onClick.AddListener(CloseIntro);
     }
 
     private void Update()
     {
-        /* Si otro script volvió a bloquear el cursor, lo liberamos de nuevo */
         if (IsIntroOpen &&
            (Cursor.lockState != CursorLockMode.None || !Cursor.visible))
             UnlockCursor();
@@ -37,7 +36,6 @@ public class Level1IntroUIManager : MonoBehaviour
         FindObjectOfType<PauseMenuManager>()?.ForceUpdateCursor();
     }
 
-    /* ————— Utilidad ————— */
     private static void UnlockCursor()
     {
         Cursor.lockState = CursorLockMode.None;

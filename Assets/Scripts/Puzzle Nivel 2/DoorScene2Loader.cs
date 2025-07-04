@@ -17,10 +17,8 @@ public class DoorScene2Loader : NetworkBehaviour
         {
             Debug.Log("🚪 Puertas del nivel 2 abiertas. Cargando siguiente escena...");
 
-            // ✅ Transición segura: carga aditiva y luego puedes descargar la anterior
             NetworkManager.Singleton.SceneManager.LoadScene(nextSceneName, LoadSceneMode.Additive);
 
-            // OPCIONAL: descarga la escena actual después de unos segundos
             Invoke(nameof(UnloadCurrentScene), 3f);
         }
         else

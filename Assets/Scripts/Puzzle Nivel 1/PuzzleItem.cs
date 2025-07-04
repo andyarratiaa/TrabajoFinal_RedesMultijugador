@@ -27,7 +27,6 @@ public class PuzzleItem : NetworkBehaviour
     {
         if (IsOwner && PuzzleUIManager.Instance != null)
         {
-            // No modificamos aquí UI ya que se actualizará con el OnValueChanged desde el PuzzleManager
         }
 
         TryDespawnServerRpc();

@@ -7,7 +7,7 @@ public class CoopSwitch : NetworkBehaviour
     [SerializeField] private Material offMat, onMat;
     private MeshRenderer rend;
 
-    private int pressCount = 0;   // solo válido en el server
+    private int pressCount = 0;
 
     public NetworkVariable<bool> IsPressed = new(
         false, NetworkVariableReadPermission.Everyone,
@@ -21,7 +21,6 @@ public class CoopSwitch : NetworkBehaviour
             rend.material = v ? onMat : offMat;
     }
 
-    /* ---------- Trigger ---------- */
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Player")) return;
@@ -29,7 +28,7 @@ public class CoopSwitch : NetworkBehaviour
         if (IsServer)
             RegisterPressServer(true);
         else
-            RegisterPressServerRpc(true);     // avisa al host
+            RegisterPressServerRpc(true); 
     }
 
     private void OnTriggerExit(Collider other)
@@ -42,11 +41,10 @@ public class CoopSwitch : NetworkBehaviour
             RegisterPressServerRpc(false);
     }
 
-    /* ---------- Lógica en el server ---------- */
     [ServerRpc(RequireOwnership = false)]
     private void RegisterPressServerRpc(bool down)
     {
-        RegisterPressServer(down);            // ejecuta la misma lógica
+        RegisterPressServer(down);    
     }
 
     private void RegisterPressServer(bool down)
@@ -54,7 +52,7 @@ public class CoopSwitch : NetworkBehaviour
         pressCount = Mathf.Max(pressCount + (down ? 1 : -1), 0);
 
         bool prev = IsPressed.Value;
-        IsPressed.Value = pressCount > 0;     // actualiza si cambia
+        IsPressed.Value = pressCount > 0;  
 
         if (prev != IsPressed.Value)
             CoopSwitchManager.Instance?.NotifySwitchChanged();

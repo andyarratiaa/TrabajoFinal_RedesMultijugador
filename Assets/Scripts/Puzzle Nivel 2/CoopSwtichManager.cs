@@ -16,7 +16,6 @@ public class CoopSwitchManager : NetworkBehaviour
 
     private void Awake() => Instance = this;
 
-    /* ---------- Llamado por cada botón al cambiar ---------- */
     public void NotifySwitchChanged()
     {
         if (!IsServer) return;
@@ -36,7 +35,7 @@ public class CoopSwitchManager : NetworkBehaviour
         if (timer <= 0f)
         {
             Puzzle2Door.SetAllDoorsOpen();
-            enabled = false;              // no hace falta seguir comprobando
+            enabled = false;            
         }
     }
 }

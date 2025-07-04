@@ -1,5 +1,4 @@
-﻿// Assets/Scripts/Puzzle Nivel 2/Puzzle2Manager.cs
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -12,7 +11,6 @@ public class Puzzle2Manager : NetworkBehaviour
     [SerializeField] private GameObject itemPrefabB;
     [SerializeField] private Collider[] itemSpawnZones;
 
-    /* ─── NUEVO: sonido al recoger ─── */
     [Header("Audio")]
     [SerializeField] private AudioClip pickupClip;
     [SerializeField] private float pickupVolume = 1f;
@@ -35,9 +33,6 @@ public class Puzzle2Manager : NetworkBehaviour
 
     private void Awake() => Instance = this;
 
-    // ──────────────────────────────────────────────────────────────────────────────
-    #region Ciclo de red
-    // ──────────────────────────────────────────────────────────────────────────────
     public override void OnNetworkSpawn()
     {
         if (IsServer)
@@ -47,13 +42,12 @@ public class Puzzle2Manager : NetworkBehaviour
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
         }
 
-        // Hooks UI
         collectedA.OnValueChanged += (_, v) => Puzzle2UIManager.Instance?.SetCollectedA(v);
         totalRequiredA.OnValueChanged += (_, v) => Puzzle2UIManager.Instance?.SetTotalRequiredA(v);
         collectedB.OnValueChanged += (_, v) => Puzzle2UIManager.Instance?.SetCollectedB(v);
         totalRequiredB.OnValueChanged += (_, v) => Puzzle2UIManager.Instance?.SetTotalRequiredB(v);
 
-        // Estado inicial
+
         Puzzle2UIManager.Instance?.SetCollectedA(collectedA.Value);
         Puzzle2UIManager.Instance?.SetTotalRequiredA(totalRequiredA.Value);
         Puzzle2UIManager.Instance?.SetCollectedB(collectedB.Value);
@@ -68,11 +62,7 @@ public class Puzzle2Manager : NetworkBehaviour
             NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
         }
     }
-    #endregion
 
-    // ──────────────────────────────────────────────────────────────────────────────
-    #region Servidor – spawn y limpieza por jugador
-    // ──────────────────────────────────────────────────────────────────────────────
     private void InitializeExistingClients()
     {
         collectedAByClient.Clear();
@@ -100,7 +90,7 @@ public class Puzzle2Manager : NetworkBehaviour
 
     private void SpawnItemsForClient(ulong clientId)
     {
-        /* Item A */
+
         collectedAByClient[clientId] = false;
         var objA = Instantiate(itemPrefabA, GetRandomSpawnPosition(), Quaternion.identity)
                        .GetComponent<NetworkObject>();
@@ -109,7 +99,7 @@ public class Puzzle2Manager : NetworkBehaviour
         itemAByClient[clientId] = objA;
         totalRequiredA.Value++;
 
-        /* Item B */
+
         collectedBByClient[clientId] = false;
         var objB = Instantiate(itemPrefabB, GetRandomSpawnPosition(), Quaternion.identity)
                        .GetComponent<NetworkObject>();
@@ -128,16 +118,12 @@ public class Puzzle2Manager : NetworkBehaviour
             dict.Remove(clientId);
         }
     }
-    #endregion
 
-    // ──────────────────────────────────────────────────────────────────────────────
-    #region Servidor – notificación de recolección
-    // ──────────────────────────────────────────────────────────────────────────────
     [ServerRpc(RequireOwnership = false)]
     public void NotifyCollectedServerRpc(ulong clientId, int kindInt)
     {
         var kind = (Puzzle2ItemKind)kindInt;
-        NetworkObject pickedObj = null;                         // NUEVO
+        NetworkObject pickedObj = null;                       
 
         switch (kind)
         {
@@ -145,18 +131,18 @@ public class Puzzle2Manager : NetworkBehaviour
                 if (!collectedAByClient.TryGetValue(clientId, out bool doneA) || doneA) return;
                 collectedAByClient[clientId] = true;
                 collectedA.Value++;
-                itemAByClient.TryGetValue(clientId, out pickedObj);   // NUEVO
+                itemAByClient.TryGetValue(clientId, out pickedObj);  
                 break;
 
             case Puzzle2ItemKind.ItemB:
                 if (!collectedBByClient.TryGetValue(clientId, out bool doneB) || doneB) return;
                 collectedBByClient[clientId] = true;
                 collectedB.Value++;
-                itemBByClient.TryGetValue(clientId, out pickedObj);   // NUEVO
+                itemBByClient.TryGetValue(clientId, out pickedObj);  
                 break;
         }
 
-        /* NUEVO: sonido en todos los clientes */
+ 
         if (pickedObj != null)
             PlayPickupSoundClientRpc(pickedObj.transform.position);
 
@@ -164,7 +150,6 @@ public class Puzzle2Manager : NetworkBehaviour
             CoopSwitchManager.Instance?.NotifySwitchChanged();
     }
 
-    /* NUEVO: RPC que reproduce el sonido localmente */
     [ClientRpc]
     private void PlayPickupSoundClientRpc(Vector3 worldPos)
     {
@@ -177,18 +162,13 @@ public class Puzzle2Manager : NetworkBehaviour
         collectedB.Value >= totalRequiredB.Value;
 
     public bool AllObjectsCollected => AllCollected();
-    #endregion
 
-    // ──────────────────────────────────────────────────────────────────────────────
-    #region Utilidades
-    // ──────────────────────────────────────────────────────────────────────────────
     private Vector3 GetRandomSpawnPosition()
     {
         var zone = itemSpawnZones[Random.Range(0, itemSpawnZones.Length)];
         var b = zone.bounds;
         return new Vector3(Random.Range(b.min.x, b.max.x), b.min.y, Random.Range(b.min.z, b.max.z));
     }
-    #endregion
 
     [ServerRpc(RequireOwnership = false)]
     public void DespawnAllItemsServerRpc()

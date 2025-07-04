@@ -7,13 +7,12 @@ public class PauseMenuManager : MonoBehaviour
     private bool isPaused = false;
 
     [Header("Holders")]
-    [SerializeField] private GameObject pauseMenuHolder;   // menú de pausa completo
-    [SerializeField] private GameObject settingsPanel;     // sub-menú “Settings” (hijo del menú de pausa)
+    [SerializeField] private GameObject pauseMenuHolder; 
+    [SerializeField] private GameObject settingsPanel;
 
-    /*  Acceso global al estado de pausa  */
     public static bool IsPaused => staticReference != null && staticReference.isPaused;
 
-    /* ─────────────────────────────── Ciclo de vida ─────────────────────────────── */
+
     private void Awake()
     {
         if (staticReference != null)
@@ -21,8 +20,8 @@ public class PauseMenuManager : MonoBehaviour
 
         staticReference = this;
 
-        pauseMenuHolder.SetActive(isPaused);     // al arrancar, menú cerrado
-        if (settingsPanel != null)               // asegurar que Settings también arranca cerrado
+        pauseMenuHolder.SetActive(isPaused);    
+        if (settingsPanel != null)               
             settingsPanel.SetActive(false);
     }
 
@@ -30,19 +29,16 @@ public class PauseMenuManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            /*  Alternar pausa  */
             isPaused = !isPaused;
             pauseMenuHolder.SetActive(isPaused);
 
-            /*  Si cerramos la pausa, cerramos también Settings (requisito nuevo)  */
             if (!isPaused && settingsPanel != null)
                 settingsPanel.SetActive(false);
 
-            UpdateCursorState();                 // cursor coherente para cualquier combinación
+            UpdateCursorState();                 
         }
     }
 
-    /* ─────────────────────────────── Cursor / UI ─────────────────────────────── */
     private void UpdateCursorState()
     {
         bool settingsOpen = settingsPanel != null && settingsPanel.activeSelf;
@@ -56,10 +52,8 @@ public class PauseMenuManager : MonoBehaviour
         Cursor.visible = show;
     }
 
-    /*  Llamada externa (por ejemplo, desde otros scripts/UI)  */
     public void ForceUpdateCursor() => UpdateCursorState();
 
-    /* ─────────────────────────────── Botones UI ─────────────────────────────── */
     public void DisconnectFromServer() => NetworkManager.Singleton.Shutdown();
     public void Exit() => Application.Quit();
 }

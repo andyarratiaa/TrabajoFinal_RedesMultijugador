@@ -7,26 +7,24 @@ public class ChatManager : NetworkBehaviour
     public static bool IsChatOpen { get; private set; } = false;
 
     [Header("UI References")]
-    [SerializeField] private GameObject chatMessagePrefab;   // Prefab del mensaje de chat (debe tener TMP_Text)
-    [SerializeField] private Transform chatContent;          // Content del ScrollView
-    [SerializeField] private TMP_InputField chatInput;       // InputField donde se escribe
+    [SerializeField] private GameObject chatMessagePrefab;  
+    [SerializeField] private Transform chatContent;          
+    [SerializeField] private TMP_InputField chatInput;       
 
     private bool chatOpen = false;
 
     private void Update()
     {
-        if (Level1IntroUIManager.IsIntroOpen) return;   // ← NUEVO
+        if (Level1IntroUIManager.IsIntroOpen) return;   
 
         if (Level2IntroUIManager.IsIntroOpen) return;
 
-        /* 1. NO permitir abrir chat si el Lose Panel está activo */
-        if (Level2UIManager.IsLosePanelOpen) return;   // ← NUEVO
+        if (Level2UIManager.IsLosePanelOpen) return;  
 
-        // Abrir chat con T
+
         if (!chatOpen && Input.GetKeyDown(KeyCode.T))
             ToggleChat(true);
 
-        // Si chat está abierto y se presiona Enter
         if (chatOpen && Input.GetKeyDown(KeyCode.Return))
         {
             if (!string.IsNullOrWhiteSpace(chatInput.text))
@@ -64,7 +62,7 @@ public class ChatManager : NetworkBehaviour
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
 
-        // Buscar el nombre real del jugador
+
         string playerName = $"Player {senderId}";
 
         foreach (var player in FindObjectsOfType<NetworkPlayerInitializer>())
@@ -85,7 +83,6 @@ public class ChatManager : NetworkBehaviour
     {
         Debug.Log($"📨 Mensaje recibido: {message}");
 
-        // Instanciar el mensaje en el ScrollView
         GameObject instance = Instantiate(chatMessagePrefab, chatContent);
 
         TMP_Text textComponent = instance.GetComponentInChildren<TMP_Text>();
