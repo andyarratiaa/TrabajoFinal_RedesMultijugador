@@ -6,41 +6,41 @@ public class PuzzleManager : NetworkBehaviour
 {
     public static PuzzleManager Instance;
 
-    [Header("Set in Inspector")]
+    [Header("Prefabs y zonas")]
     [SerializeField] private GameObject puzzleItemPrefab;
     [SerializeField] private Collider[] puzzleItemSpawnZones;
 
-    // ▼ Datos por jugador
-    private readonly Dictionary<ulong, bool> collectedByClient = new();
-    private readonly Dictionary<ulong, NetworkObject> itemByClient = new();   // ← NUEVO
+    [Header("Audio")]
+    [SerializeField] private AudioClip pickupClip;   // sonido de recoger
+    [SerializeField] private float pickupVolume = 1f;
 
-    // ▼ Variables sincronizadas
+    /* ▼ Datos por jugador */
+    private readonly Dictionary<ulong, bool> collectedByClient = new();
+    private readonly Dictionary<ulong, NetworkObject> itemByClient = new();
+
+    /* ▼ Variables sincronizadas */
     private readonly NetworkVariable<int> collectedCount = new(
-        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        0, NetworkVariableReadPermission.Everyone,
+           NetworkVariableWritePermission.Server);
 
     private readonly NetworkVariable<int> totalRequired = new(
-        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        0, NetworkVariableReadPermission.Everyone,
+           NetworkVariableWritePermission.Server);
 
     private void Awake() => Instance = this;
 
-    // ──────────────────────────────────────────────────────────────────────────────
-    #region Ciclo de red
-    // ──────────────────────────────────────────────────────────────────────────────
+    /* ─────────────────────────── Ciclo de red ─────────────────────────── */
     public override void OnNetworkSpawn()
     {
         if (IsServer)
         {
             InitializeExistingClients();
-
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
         }
 
-        collectedCount.OnValueChanged += (_, newVal) =>
-            PuzzleUIManager.Instance?.SetCollected(newVal);
-
-        totalRequired.OnValueChanged += (_, newVal) =>
-            PuzzleUIManager.Instance?.SetTotalRequired(newVal);
+        collectedCount.OnValueChanged += (_, v) => PuzzleUIManager.Instance?.SetCollected(v);
+        totalRequired.OnValueChanged += (_, v) => PuzzleUIManager.Instance?.SetTotalRequired(v);
 
         PuzzleUIManager.Instance?.SetCollected(collectedCount.Value);
         PuzzleUIManager.Instance?.SetTotalRequired(totalRequired.Value);
@@ -54,11 +54,8 @@ public class PuzzleManager : NetworkBehaviour
             NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
         }
     }
-    #endregion
 
-    // ──────────────────────────────────────────────────────────────────────────────
-    #region Servidor – spawn y limpieza por jugador
-    // ──────────────────────────────────────────────────────────────────────────────
+    /* ───────────────────── Servidor – spawn y limpieza ───────────────────── */
     private void InitializeExistingClients()
     {
         collectedByClient.Clear();
@@ -69,54 +66,57 @@ public class PuzzleManager : NetworkBehaviour
             SpawnItemForClient(client.ClientId);
     }
 
-    private void OnClientConnected(ulong clientId) => SpawnItemForClient(clientId);
+    private void OnClientConnected(ulong cid) => SpawnItemForClient(cid);
 
-    private void OnClientDisconnected(ulong clientId)
+    private void OnClientDisconnected(ulong cid)
     {
-        // 1) Despawn y destroy del objeto del jugador que se va
-        if (itemByClient.TryGetValue(clientId, out var netObj))
-        {
-            if (netObj != null && netObj.IsSpawned)
-                netObj.Despawn(true);      // true ⇒ también Destroy()
-            itemByClient.Remove(clientId);
-        }
+        if (itemByClient.TryGetValue(cid, out var netObj) && netObj.IsSpawned)
+            netObj.Despawn(true);
 
-        // 2) Ajustar las estructuras lógicas
-        if (collectedByClient.Remove(clientId))
+        itemByClient.Remove(cid);
+
+        if (collectedByClient.Remove(cid))
             totalRequired.Value--;
     }
 
-    private void SpawnItemForClient(ulong clientId)
+    private void SpawnItemForClient(ulong cid)
     {
-        collectedByClient[clientId] = false;
+        collectedByClient[cid] = false;
 
         Vector3 pos = GetRandomSpawnPosition();
-        var itemObj = Instantiate(puzzleItemPrefab, pos, Quaternion.identity)
-                          .GetComponent<NetworkObject>();
+        var obj = Instantiate(puzzleItemPrefab, pos, Quaternion.identity)
+                     .GetComponent<NetworkObject>();
 
-        itemObj.Spawn();
-        itemObj.GetComponent<PuzzleItem>().SetAssignedClientId(clientId);
+        obj.Spawn();
+        obj.GetComponent<PuzzleItem>().SetAssignedClientId(cid);
 
-        // Guardar referencia para poder despawnearlo luego
-        itemByClient[clientId] = itemObj;
-
+        itemByClient[cid] = obj;
         totalRequired.Value++;
     }
-    #endregion
 
-    // ──────────────────────────────────────────────────────────────────────────────
-    #region Lógica de recolección
-    // ──────────────────────────────────────────────────────────────────────────────
+    /* ────────────────────────── Lógica de recolección ───────────────────────── */
     [ServerRpc(RequireOwnership = false)]
-    public void NotifyCollectedServerRpc(ulong clientId)
+    public void NotifyCollectedServerRpc(ulong cid)
     {
-        if (!collectedByClient.TryGetValue(clientId, out bool already) || already) return;
+        if (!collectedByClient.TryGetValue(cid, out bool already) || already) return;
 
-        collectedByClient[clientId] = true;
+        collectedByClient[cid] = true;
         collectedCount.Value++;
+
+        /* ▶ Reproduce sonido en todos los clientes en la posición del objeto */
+        if (itemByClient.TryGetValue(cid, out NetworkObject obj) && obj != null)
+            PlayPickupSoundClientRpc(obj.transform.position);
 
         if (AllCollected())
             PuzzleDoor.SetAllDoorsOpen();
+    }
+
+    /* Sonido de recogida: se ejecuta en TODOS los clientes */
+    [ClientRpc]
+    private void PlayPickupSoundClientRpc(Vector3 worldPos)
+    {
+        if (pickupClip != null)
+            AudioSource.PlayClipAtPoint(pickupClip, worldPos, pickupVolume);
     }
 
     private bool AllCollected()
@@ -125,23 +125,16 @@ public class PuzzleManager : NetworkBehaviour
             if (!done) return false;
         return true;
     }
-    #endregion
 
-    // ──────────────────────────────────────────────────────────────────────────────
-    #region Utilidades privadas
-    // ──────────────────────────────────────────────────────────────────────────────
+    /* ───────────────────────────── Utilidades ───────────────────────────── */
     private Vector3 GetRandomSpawnPosition()
     {
         var zone = puzzleItemSpawnZones[Random.Range(0, puzzleItemSpawnZones.Length)];
         var b = zone.bounds;
-        return new Vector3(
-            Random.Range(b.min.x, b.max.x),
-            b.min.y,
-            Random.Range(b.min.z, b.max.z)
-        );
+        return new Vector3(Random.Range(b.min.x, b.max.x), b.min.y, Random.Range(b.min.z, b.max.z));
     }
-    #endregion
 }
+
 
 
 

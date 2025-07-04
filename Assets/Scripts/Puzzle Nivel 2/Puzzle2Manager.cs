@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿// Assets/Scripts/Puzzle Nivel 2/Puzzle2Manager.cs
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -11,6 +12,11 @@ public class Puzzle2Manager : NetworkBehaviour
     [SerializeField] private GameObject itemPrefabB;
     [SerializeField] private Collider[] itemSpawnZones;
 
+    /* ─── NUEVO: sonido al recoger ─── */
+    [Header("Audio")]
+    [SerializeField] private AudioClip pickupClip;
+    [SerializeField] private float pickupVolume = 1f;
+
     // ▼ Diccionarios por jugador
     private readonly Dictionary<ulong, bool> collectedAByClient = new();
     private readonly Dictionary<ulong, bool> collectedBByClient = new();
@@ -18,10 +24,14 @@ public class Puzzle2Manager : NetworkBehaviour
     private readonly Dictionary<ulong, NetworkObject> itemBByClient = new();
 
     // ▼ Variables sincronizadas
-    private readonly NetworkVariable<int> collectedA = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private readonly NetworkVariable<int> collectedB = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private readonly NetworkVariable<int> totalRequiredA = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    private readonly NetworkVariable<int> totalRequiredB = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<int> collectedA = new(0,
+        NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<int> collectedB = new(0,
+        NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<int> totalRequiredA = new(0,
+        NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<int> totalRequiredB = new(0,
+        NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private void Awake() => Instance = this;
 
@@ -43,7 +53,7 @@ public class Puzzle2Manager : NetworkBehaviour
         collectedB.OnValueChanged += (_, v) => Puzzle2UIManager.Instance?.SetCollectedB(v);
         totalRequiredB.OnValueChanged += (_, v) => Puzzle2UIManager.Instance?.SetTotalRequiredB(v);
 
-        // Estado inicial para quien se acaba de unir
+        // Estado inicial
         Puzzle2UIManager.Instance?.SetCollectedA(collectedA.Value);
         Puzzle2UIManager.Instance?.SetTotalRequiredA(totalRequiredA.Value);
         Puzzle2UIManager.Instance?.SetCollectedB(collectedB.Value);
@@ -90,7 +100,7 @@ public class Puzzle2Manager : NetworkBehaviour
 
     private void SpawnItemsForClient(ulong clientId)
     {
-        // Item A
+        /* Item A */
         collectedAByClient[clientId] = false;
         var objA = Instantiate(itemPrefabA, GetRandomSpawnPosition(), Quaternion.identity)
                        .GetComponent<NetworkObject>();
@@ -99,7 +109,7 @@ public class Puzzle2Manager : NetworkBehaviour
         itemAByClient[clientId] = objA;
         totalRequiredA.Value++;
 
-        // Item B
+        /* Item B */
         collectedBByClient[clientId] = false;
         var objB = Instantiate(itemPrefabB, GetRandomSpawnPosition(), Quaternion.identity)
                        .GetComponent<NetworkObject>();
@@ -127,32 +137,44 @@ public class Puzzle2Manager : NetworkBehaviour
     public void NotifyCollectedServerRpc(ulong clientId, int kindInt)
     {
         var kind = (Puzzle2ItemKind)kindInt;
+        NetworkObject pickedObj = null;                         // NUEVO
+
         switch (kind)
         {
             case Puzzle2ItemKind.ItemA:
                 if (!collectedAByClient.TryGetValue(clientId, out bool doneA) || doneA) return;
                 collectedAByClient[clientId] = true;
                 collectedA.Value++;
+                itemAByClient.TryGetValue(clientId, out pickedObj);   // NUEVO
                 break;
+
             case Puzzle2ItemKind.ItemB:
                 if (!collectedBByClient.TryGetValue(clientId, out bool doneB) || doneB) return;
                 collectedBByClient[clientId] = true;
                 collectedB.Value++;
+                itemBByClient.TryGetValue(clientId, out pickedObj);   // NUEVO
                 break;
         }
 
+        /* NUEVO: sonido en todos los clientes */
+        if (pickedObj != null)
+            PlayPickupSoundClientRpc(pickedObj.transform.position);
+
         if (AllCollected())
-        {
-            // Deja que CoopSwitchManager decida abrir la puerta
             CoopSwitchManager.Instance?.NotifySwitchChanged();
-        }
-
     }
 
-    private bool AllCollected()
+    /* NUEVO: RPC que reproduce el sonido localmente */
+    [ClientRpc]
+    private void PlayPickupSoundClientRpc(Vector3 worldPos)
     {
-        return collectedA.Value >= totalRequiredA.Value && collectedB.Value >= totalRequiredB.Value;
+        if (pickupClip != null)
+            AudioSource.PlayClipAtPoint(pickupClip, worldPos, pickupVolume);
     }
+
+    private bool AllCollected() =>
+        collectedA.Value >= totalRequiredA.Value &&
+        collectedB.Value >= totalRequiredB.Value;
 
     public bool AllObjectsCollected => AllCollected();
     #endregion
@@ -168,14 +190,10 @@ public class Puzzle2Manager : NetworkBehaviour
     }
     #endregion
 
-    // Despawnea todos los objetos A/B que queden vivos
     [ServerRpc(RequireOwnership = false)]
     public void DespawnAllItemsServerRpc()
     {
-        foreach (var kv in itemAByClient.Values)
-            if (kv != null && kv.IsSpawned) kv.Despawn(true);
-
-        foreach (var kv in itemBByClient.Values)
-            if (kv != null && kv.IsSpawned) kv.Despawn(true);
+        foreach (var n in itemAByClient.Values) if (n != null && n.IsSpawned) n.Despawn(true);
+        foreach (var n in itemBByClient.Values) if (n != null && n.IsSpawned) n.Despawn(true);
     }
 }
