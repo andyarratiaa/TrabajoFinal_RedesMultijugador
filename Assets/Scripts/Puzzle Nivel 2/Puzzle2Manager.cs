@@ -14,6 +14,7 @@ public class Puzzle2Manager : NetworkBehaviour
     [Header("Audio")]
     [SerializeField] private AudioClip pickupClip;
     [SerializeField] private float pickupVolume = 1f;
+    [SerializeField] private AudioSource pickupAudioSource;
 
     // ▼ Diccionarios por jugador
     private readonly Dictionary<ulong, bool> collectedAByClient = new();
@@ -47,11 +48,14 @@ public class Puzzle2Manager : NetworkBehaviour
         collectedB.OnValueChanged += (_, v) => Puzzle2UIManager.Instance?.SetCollectedB(v);
         totalRequiredB.OnValueChanged += (_, v) => Puzzle2UIManager.Instance?.SetTotalRequiredB(v);
 
-
         Puzzle2UIManager.Instance?.SetCollectedA(collectedA.Value);
         Puzzle2UIManager.Instance?.SetTotalRequiredA(totalRequiredA.Value);
         Puzzle2UIManager.Instance?.SetCollectedB(collectedB.Value);
         Puzzle2UIManager.Instance?.SetTotalRequiredB(totalRequiredB.Value);
+
+
+        if (pickupAudioSource == null)
+            Debug.LogWarning("Puzzle2Manager: No se ha asignado un AudioSource para reproducir el sonido de recogida.");
     }
 
     public override void OnNetworkDespawn()
@@ -90,7 +94,6 @@ public class Puzzle2Manager : NetworkBehaviour
 
     private void SpawnItemsForClient(ulong clientId)
     {
-
         collectedAByClient[clientId] = false;
         var objA = Instantiate(itemPrefabA, GetRandomSpawnPosition(), Quaternion.identity)
                        .GetComponent<NetworkObject>();
@@ -98,7 +101,6 @@ public class Puzzle2Manager : NetworkBehaviour
         objA.GetComponent<Puzzle2Item>().Initialize(clientId, Puzzle2ItemKind.ItemA);
         itemAByClient[clientId] = objA;
         totalRequiredA.Value++;
-
 
         collectedBByClient[clientId] = false;
         var objB = Instantiate(itemPrefabB, GetRandomSpawnPosition(), Quaternion.identity)
@@ -123,7 +125,7 @@ public class Puzzle2Manager : NetworkBehaviour
     public void NotifyCollectedServerRpc(ulong clientId, int kindInt)
     {
         var kind = (Puzzle2ItemKind)kindInt;
-        NetworkObject pickedObj = null;                       
+        NetworkObject pickedObj = null;
 
         switch (kind)
         {
@@ -131,30 +133,33 @@ public class Puzzle2Manager : NetworkBehaviour
                 if (!collectedAByClient.TryGetValue(clientId, out bool doneA) || doneA) return;
                 collectedAByClient[clientId] = true;
                 collectedA.Value++;
-                itemAByClient.TryGetValue(clientId, out pickedObj);  
+                itemAByClient.TryGetValue(clientId, out pickedObj);
                 break;
 
             case Puzzle2ItemKind.ItemB:
                 if (!collectedBByClient.TryGetValue(clientId, out bool doneB) || doneB) return;
                 collectedBByClient[clientId] = true;
                 collectedB.Value++;
-                itemBByClient.TryGetValue(clientId, out pickedObj);  
+                itemBByClient.TryGetValue(clientId, out pickedObj);
                 break;
         }
 
- 
         if (pickedObj != null)
-            PlayPickupSoundClientRpc(pickedObj.transform.position);
+            PlayPickupSoundClientRpc();
 
         if (AllCollected())
             CoopSwitchManager.Instance?.NotifySwitchChanged();
     }
 
     [ClientRpc]
-    private void PlayPickupSoundClientRpc(Vector3 worldPos)
+    private void PlayPickupSoundClientRpc()
     {
-        if (pickupClip != null)
-            AudioSource.PlayClipAtPoint(pickupClip, worldPos, pickupVolume);
+        if (pickupAudioSource != null && pickupClip != null)
+        {
+            pickupAudioSource.clip = pickupClip;
+            pickupAudioSource.volume = pickupVolume;
+            pickupAudioSource.Play();
+        }
     }
 
     private bool AllCollected() =>
@@ -177,3 +182,4 @@ public class Puzzle2Manager : NetworkBehaviour
         foreach (var n in itemBByClient.Values) if (n != null && n.IsSpawned) n.Despawn(true);
     }
 }
+

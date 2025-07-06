@@ -13,6 +13,7 @@ public class PuzzleManager : NetworkBehaviour
     [Header("Audio")]
     [SerializeField] private AudioClip pickupClip;
     [SerializeField] private float pickupVolume = 1f;
+    [SerializeField] private AudioSource pickupAudioSource;
 
     /* ▼ Datos por jugador */
     private readonly Dictionary<ulong, bool> collectedByClient = new();
@@ -43,6 +44,9 @@ public class PuzzleManager : NetworkBehaviour
 
         PuzzleUIManager.Instance?.SetCollected(collectedCount.Value);
         PuzzleUIManager.Instance?.SetTotalRequired(totalRequired.Value);
+
+        if (pickupAudioSource == null)
+            Debug.LogWarning("PuzzleManager: No se ha asignado AudioSource para sonidos de recogida.");
     }
 
     public override void OnNetworkDespawn()
@@ -101,18 +105,21 @@ public class PuzzleManager : NetworkBehaviour
         collectedCount.Value++;
 
         if (itemByClient.TryGetValue(cid, out NetworkObject obj) && obj != null)
-            PlayPickupSoundClientRpc(obj.transform.position);
+            PlayPickupSoundClientRpc();
 
         if (AllCollected())
             PuzzleDoor.SetAllDoorsOpen();
     }
 
-
     [ClientRpc]
-    private void PlayPickupSoundClientRpc(Vector3 worldPos)
+    private void PlayPickupSoundClientRpc()
     {
-        if (pickupClip != null)
-            AudioSource.PlayClipAtPoint(pickupClip, worldPos, pickupVolume);
+        if (pickupAudioSource != null && pickupClip != null)
+        {
+            pickupAudioSource.clip = pickupClip;
+            pickupAudioSource.volume = pickupVolume;
+            pickupAudioSource.Play();
+        }
     }
 
     private bool AllCollected()
